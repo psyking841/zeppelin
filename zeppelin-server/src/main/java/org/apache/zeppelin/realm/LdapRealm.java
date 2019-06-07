@@ -361,10 +361,13 @@ public class LdapRealm extends JndiLdapRealm {
     byte[] cookie = null;
     try {
       ldapCtx.addToEnvironment(Context.REFERRAL, "ignore");
-        
-      ldapCtx.setRequestControls(new Control[]{new PagedResultsControl(pageSize, 
-            Control.NONCRITICAL)});
-        
+
+      if(pageSize == 0) {
+        ldapCtx.setRequestControls(null);
+      } else {
+        ldapCtx.setRequestControls(new Control[]{new PagedResultsControl(pageSize,
+                Control.NONCRITICAL)});
+      }
       do {
         // ldapsearch -h localhost -p 33389 -D
         // uid=guest,ou=people,dc=hadoop,dc=apache,dc=org -w guest-password
@@ -425,8 +428,12 @@ public class LdapRealm extends JndiLdapRealm {
           }
         }
         // Re-activate paged results
-        ldapCtx.setRequestControls(new Control[]{new PagedResultsControl(pageSize,
-            cookie, Control.CRITICAL)});
+        if(pageSize == 0) {
+          ldapCtx.setRequestControls(null);
+        } else {
+          ldapCtx.setRequestControls(new Control[]{new PagedResultsControl(pageSize,
+                  cookie, Control.CRITICAL)});
+        }
       } while (cookie != null);
     } catch (SizeLimitExceededException e) {
       log.info("Only retrieved first " + numResults +
