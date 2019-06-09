@@ -418,8 +418,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
   private Connection getConnectionFromPool(String url, String user, String propertyKey,
       Properties properties) throws SQLException, ClassNotFoundException {
     String jdbcDriver = getJDBCDriverName(user, propertyKey);
-
+    logger.debug("jdbcDriver is " + jdbcDriver);
     if (!getJDBCConfiguration(user).isConnectionInDBDriverPool(propertyKey)) {
+      logger.debug("Connection not in pool");
       createConnectionPool(url, user, propertyKey, properties);
     }
     return DriverManager.getConnection(jdbcDriver);
@@ -438,6 +439,11 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     final Properties properties = jdbcUserConfigurations.getPropertyMap(propertyKey);
     final String url = properties.getProperty(URL_KEY);
+    logger.debug("URL is " + url);
+    logger.debug("User is " + user);
+    logger.debug("propertyKey is " + propertyKey);
+    logger.debug("properties is " + properties);
+    logger.debug("zeppelin.jdbc.auth.type is " + getProperty("zeppelin.jdbc.auth.type"));
 
     if (isEmpty(getProperty("zeppelin.jdbc.auth.type"))) {
       connection = getConnectionFromPool(url, user, propertyKey, properties);
