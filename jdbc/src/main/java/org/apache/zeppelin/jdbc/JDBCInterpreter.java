@@ -417,13 +417,16 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   private Connection getConnectionFromPool(String url, String user, String propertyKey,
       Properties properties) throws SQLException, ClassNotFoundException {
-    String jdbcDriver = getJDBCDriverName(user, propertyKey);
-    logger.debug("jdbcDriver is " + jdbcDriver);
+    //String jdbcDriver = getJDBCDriverName(user, propertyKey);
+    //logger.debug("jdbcDriver is " + jdbcDriver);
     if (!getJDBCConfiguration(user).isConnectionInDBDriverPool(propertyKey)) {
       logger.debug("Connection not in pool");
       createConnectionPool(url, user, propertyKey, properties);
     }
-    return DriverManager.getConnection(jdbcDriver);
+    Properties p = (Properties) properties.clone();
+    p.remove(DRIVER_KEY);
+    logger.debug("Remove driver key from properties and create connection with " + p);
+    return DriverManager.getConnection(url, p);
   }
 
   public Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
