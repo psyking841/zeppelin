@@ -425,6 +425,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     }
     Properties p = (Properties) properties.clone();
     p.remove(DRIVER_KEY);
+    p.remove(URL_KEY);
     logger.debug("Remove driver key from properties and create connection with " + p);
     return DriverManager.getConnection(url, p);
   }
