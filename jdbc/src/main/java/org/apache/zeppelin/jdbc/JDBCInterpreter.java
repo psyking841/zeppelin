@@ -341,7 +341,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
   private UsernamePassword getUsernamePassword(InterpreterContext interpreterContext,
                                                String replName) {
     UserCredentials uc = interpreterContext.getAuthenticationInfo().getUserCredentials();
+    logger.debug("Repl name is " + replName);
     if (uc != null) {
+      logger.debug("Username: " + uc.getUsernamePassword(replName).getUsername() + " password: " + uc.getUsernamePassword(replName).getPassword());
       return uc.getUsernamePassword(replName);
     }
     return null;
@@ -384,7 +386,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
 //    }
     logger.debug("basePropertiesMap initially is " + basePropretiesMap);
     jdbcUserConfigurations.setPropertyMap(propertyKey, basePropretiesMap.get(propertyKey));
-
+    logger.debug("basePropertiesMap after jdbcUserConfigurations.setPropertyMap is " + basePropretiesMap);
     // If based on login user, we should be return here
 //    if (existAccountInBaseProperty(propertyKey)) {
 //      return;
@@ -394,6 +396,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
       getEntityName(interpreterContext.getReplName()));
+    // I think the interpreter Context has the login username and password.
+    logger.debug("Before adding username: " + usernamePassword.getUsername() + ", password: " + usernamePassword.getPassword() + " to jdbcUserConfigurations");
     // Get password directly from login ???
     if (usernamePassword != null) {
       logger.debug("Adding username: " + usernamePassword.getUsername() + ", password: " + usernamePassword.getPassword() + " to jdbcUserConfigurations");
