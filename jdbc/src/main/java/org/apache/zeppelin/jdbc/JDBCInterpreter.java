@@ -371,25 +371,34 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
-    JDBCUserConfigurations jdbcUserConfigurations =
-      getJDBCConfiguration(user);
-    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
-      String password = getPassword(basePropretiesMap.get(propertyKey));
-      if (!isEmpty(password)) {
-        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
-      }
-    }
+    JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
+    // The following code replace the login password with password provided in the JDBC config
+    // To use the login password, we have to leave the username/password filed, e.g. default.user/default.password, empty.
+    // Or just comment following code out
+//    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
+//        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
+//      String password = getPassword(basePropretiesMap.get(propertyKey));
+//      if (!isEmpty(password)) {
+//        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
+//      }
+//    }
+    logger.debug("basePropertiesMap initially is " + basePropretiesMap);
     jdbcUserConfigurations.setPropertyMap(propertyKey, basePropretiesMap.get(propertyKey));
-    if (existAccountInBaseProperty(propertyKey)) {
-      return;
-    }
-    jdbcUserConfigurations.cleanUserProperty(propertyKey);
+
+    // If based on login user, we should be return here
+//    if (existAccountInBaseProperty(propertyKey)) {
+//      return;
+//    }
+    // Don't clear the login username and password
+    // jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
     UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
       getEntityName(interpreterContext.getReplName()));
+    // Get password directly from login ???
     if (usernamePassword != null) {
+      logger.debug("Adding username: " + usernamePassword.getUsername() + ", password: " + usernamePassword.getPassword() + " to jdbcUserConfigurations");
       jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
+      logger.debug("properties in jdbcUserConfigurations for " + propertyKey + "is " + jdbcUserConfigurations.getPropertyMap(propertyKey));
     } else {
       closeDBPool(user, propertyKey);
     }
@@ -426,6 +435,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     Properties p = (Properties) properties.clone();
     p.remove(DRIVER_KEY);
     p.remove(URL_KEY);
+    p.setProperty("user", user);
     logger.debug("Remove driver key from properties and create connection with " + p);
     return DriverManager.getConnection(url, p);
   }
