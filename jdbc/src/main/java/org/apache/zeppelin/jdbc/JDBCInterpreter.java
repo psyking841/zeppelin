@@ -343,7 +343,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     UserCredentials uc = interpreterContext.getAuthenticationInfo().getUserCredentials();
     logger.debug("Repl name is " + replName);
     if (uc != null) {
-      logger.debug("Username: " + uc.getUsernamePassword(replName).getUsername() + " password: " + uc.getUsernamePassword(replName).getPassword());
+      logger.debug("uc: " + uc);
       return uc.getUsernamePassword(replName);
     }
     return null;
@@ -377,28 +377,27 @@ public class JDBCInterpreter extends KerberosInterpreter {
     // The following code replace the login password with password provided in the JDBC config
     // To use the login password, we have to leave the username/password filed, e.g. default.user/default.password, empty.
     // Or just comment following code out
-//    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-//        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
-//      String password = getPassword(basePropretiesMap.get(propertyKey));
-//      if (!isEmpty(password)) {
-//        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
-//      }
-//    }
+    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
+        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
+      String password = getPassword(basePropretiesMap.get(propertyKey));
+      if (!isEmpty(password)) {
+        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
+      }
+    }
     logger.debug("basePropertiesMap initially is " + basePropretiesMap);
     jdbcUserConfigurations.setPropertyMap(propertyKey, basePropretiesMap.get(propertyKey));
-    logger.debug("basePropertiesMap after jdbcUserConfigurations.setPropertyMap is " + basePropretiesMap);
-    // If based on login user, we should be return here
-//    if (existAccountInBaseProperty(propertyKey)) {
-//      return;
-//    }
+    logger.debug("jdbcUserConfigurations.getPropertyMap is " + jdbcUserConfigurations.getPropertyMap(propertyKey));
+
+    if (existAccountInBaseProperty(propertyKey)) {
+      logger.debug("Should not be here");
+      return;
+    }
     // Don't clear the login username and password
-    // jdbcUserConfigurations.cleanUserProperty(propertyKey);
+    jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
     UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
       getEntityName(interpreterContext.getReplName()));
-    // I think the interpreter Context has the login username and password.
-    logger.debug("Before adding username: " + usernamePassword.getUsername() + ", password: " + usernamePassword.getPassword() + " to jdbcUserConfigurations");
-    // Get password directly from login ???
+    logger.debug("repl name is " + interpreterContext.getReplName());
     if (usernamePassword != null) {
       logger.debug("Adding username: " + usernamePassword.getUsername() + ", password: " + usernamePassword.getPassword() + " to jdbcUserConfigurations");
       jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
