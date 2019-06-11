@@ -341,6 +341,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
   private UsernamePassword getUsernamePassword(InterpreterContext interpreterContext,
                                                String replName) {
     UserCredentials uc = interpreterContext.getAuthenticationInfo().getUserCredentials();
+    logger.debug("Repl name is " + replName);
     if (uc != null) {
       return uc.getUsernamePassword(replName);
     }
@@ -371,8 +372,10 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
-    JDBCUserConfigurations jdbcUserConfigurations =
-      getJDBCConfiguration(user);
+    JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
+    // The following code replace the login password with password provided in the JDBC config
+    // To use the login password, we have to leave the username/password filed, e.g. default.user/default.password, empty.
+    // Or just comment following code out
     if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
         !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
       String password = getPassword(basePropretiesMap.get(propertyKey));
@@ -381,9 +384,11 @@ public class JDBCInterpreter extends KerberosInterpreter {
       }
     }
     jdbcUserConfigurations.setPropertyMap(propertyKey, basePropretiesMap.get(propertyKey));
+
     if (existAccountInBaseProperty(propertyKey)) {
       return;
     }
+    // Clear the login username and password, if added from the base properties
     jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
     UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
@@ -417,12 +422,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   private Connection getConnectionFromPool(String url, String user, String propertyKey,
       Properties properties) throws SQLException, ClassNotFoundException {
-    String jdbcDriver = getJDBCDriverName(user, propertyKey);
-
+    //String jdbcDriver = getJDBCDriverName(user, propertyKey);
     if (!getJDBCConfiguration(user).isConnectionInDBDriverPool(propertyKey)) {
       createConnectionPool(url, user, propertyKey, properties);
     }
-    return DriverManager.getConnection(jdbcDriver);
+    Properties p = (Properties) properties.clone();
+    p.remove(DRIVER_KEY);
+    p.remove(URL_KEY);
+    return DriverManager.getConnection(url, p);
   }
 
   public Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
