@@ -392,16 +392,16 @@ public class JDBCInterpreter extends KerberosInterpreter {
       logger.debug("Should not be here");
       return;
     }
-    // Don't clear the login username and password
+    // Clear the login username and password, if added from the base properties
     jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
     UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
       getEntityName(interpreterContext.getReplName()));
-    logger.debug("repl name is " + interpreterContext.getReplName());
+    logger.debug("Entity name is " + getEntityName(interpreterContext.getReplName()));
     if (usernamePassword != null) {
-      logger.debug("Adding username: " + usernamePassword.getUsername() + ", password: " + usernamePassword.getPassword() + " to jdbcUserConfigurations");
+      logger.debug("Added user JDBC credentials to properties.");
       jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
-      logger.debug("properties in jdbcUserConfigurations for " + propertyKey + "is " + jdbcUserConfigurations.getPropertyMap(propertyKey));
+      logger.debug("The properties in jdbcUserConfigurations for " + propertyKey + "is " + jdbcUserConfigurations.getPropertyMap(propertyKey));
     } else {
       closeDBPool(user, propertyKey);
     }
@@ -438,8 +438,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
     Properties p = (Properties) properties.clone();
     p.remove(DRIVER_KEY);
     p.remove(URL_KEY);
-    p.setProperty("user", user);
-    logger.debug("Remove driver key from properties and create connection with " + p);
+    //p.setProperty("user", user);
+    logger.debug("The properties to DriverManager is " + p);
     return DriverManager.getConnection(url, p);
   }
 
@@ -456,11 +456,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     final Properties properties = jdbcUserConfigurations.getPropertyMap(propertyKey);
     final String url = properties.getProperty(URL_KEY);
-    logger.debug("URL is " + url);
-    logger.debug("User is " + user);
-    logger.debug("propertyKey is " + propertyKey);
-    logger.debug("properties is " + properties);
-    logger.debug("zeppelin.jdbc.auth.type is " + getProperty("zeppelin.jdbc.auth.type"));
 
     if (isEmpty(getProperty("zeppelin.jdbc.auth.type"))) {
       connection = getConnectionFromPool(url, user, propertyKey, properties);
