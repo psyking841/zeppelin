@@ -426,10 +426,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
     if (!getJDBCConfiguration(user).isConnectionInDBDriverPool(propertyKey)) {
       createConnectionPool(url, user, propertyKey, properties);
     }
-    Properties p = (Properties) properties.clone();
-    p.remove(DRIVER_KEY);
-    p.remove(URL_KEY);
-    return DriverManager.getConnection(url, p);
+    Properties jdbcProperties = (Properties) properties.clone();
+    jdbcProperties.remove(DRIVER_KEY);
+    jdbcProperties.remove(URL_KEY);
+    Properties pp = (Properties) jdbcProperties.clone();
+    if (pp.containsKey("password")) pp.setProperty("password", "******");
+    else throw new RuntimeException("Password field not found for JDBC connection");
+    logger.info("Properteis passed to DriverManager is " + pp);
+    return DriverManager.getConnection(url, jdbcProperties);
   }
 
   public Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
