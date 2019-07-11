@@ -915,11 +915,11 @@ public class LdapRealm extends JndiLdapRealm {
     String matchedPrincipal = matchPrincipal(principal);
     String userSearchBase = getUserSearchBase();
     String userSearchAttributeName = getUserSearchAttributeName();
-    String ppl = principal;
+    String ppl = matchedPrincipal;
     //Convert from email to serial ID
     try {
-      IbmLdapContext ibmLdapContext = IbmLdapContext.getInstance();
-      if(matchedPrincipal.endsWith("ibm.com")){
+      if (matchedPrincipal.endsWith("ibm.com")) {
+        IbmLdapContext ibmLdapContext = IbmLdapContext.getInstance();
         ppl = ibmLdapContext.getSerialId(matchedPrincipal);
         log.debug("Convert principal from: " + principal + " to " + ppl);
       }
