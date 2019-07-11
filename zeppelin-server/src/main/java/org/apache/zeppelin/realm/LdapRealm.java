@@ -20,6 +20,7 @@
 package org.apache.zeppelin.realm;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,6 +69,7 @@ import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.MutablePrincipalCollection;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.StringUtils;
+import org.apache.zeppelin.ibmldap.IbmLdapContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -913,11 +915,23 @@ public class LdapRealm extends JndiLdapRealm {
     String matchedPrincipal = matchPrincipal(principal);
     String userSearchBase = getUserSearchBase();
     String userSearchAttributeName = getUserSearchAttributeName();
+    String ppl = principal;
+    //Convert from email to serial ID
+    try {
+      IbmLdapContext ibmLdapContext = IbmLdapContext.getInstance();
+      if(matchedPrincipal.endsWith("ibm.com")){
+        ppl = ibmLdapContext.getSerialId(matchedPrincipal);
+        log.debug("Convert principal from: " + principal + " to " + ppl);
+      }
+    }
+    catch (SQLException e) {
+      throw new IllegalStateException("Error when connecting to IBM Ldap Server: " + e.getMessage());
+    }
 
     // If not searching use the userDnTemplate and return.
     if ((userSearchBase == null || userSearchBase.isEmpty()) || (userSearchAttributeName == null
         && userSearchFilter == null && !"object".equalsIgnoreCase(userSearchScope))) {
-      userDn = expandTemplate(userDnTemplate, matchedPrincipal);
+      userDn = expandTemplate(userDnTemplate, ppl);
       if (log.isDebugEnabled()) {
         log.debug("LDAP UserDN and Principal: " + userDn + "," + principal);
       }
@@ -925,7 +939,7 @@ public class LdapRealm extends JndiLdapRealm {
     }
 
     // Create the searchBase and searchFilter from config.
-    String searchBase = expandTemplate(getUserSearchBase(), matchedPrincipal);
+    String searchBase = expandTemplate(getUserSearchBase(), ppl);
     String searchFilter = null;
     if (userSearchFilter == null) {
       if (userSearchAttributeName == null) {
@@ -933,10 +947,10 @@ public class LdapRealm extends JndiLdapRealm {
       } else {
         searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))", getUserObjectClass(),
             userSearchAttributeName, expandTemplate(getUserSearchAttributeTemplate(),
-                matchedPrincipal));
+                        ppl));
       }
     } else {
-      searchFilter = expandTemplate(userSearchFilter, matchedPrincipal);
+      searchFilter = expandTemplate(userSearchFilter, ppl);
     }
     SearchControls searchControls = getUserSearchControls();
 
